@@ -22,6 +22,7 @@ test_requires = [
     "pytest",
     "pytest-cov",
     "pytest-django",
+    "pytest-benchmark",
 ]
 
 

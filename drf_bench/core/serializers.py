@@ -1,12 +1,20 @@
 from django.core import validators
-from django.contrib.auth import models
+from django.contrib.auth import models as auth_models
 from rest_framework import serializers
-from rest_framework import validators as drf_validators
+from . import models
 
 
-class UserModel(serializers.ModelSerializer):
+class NullMixin(object):
+    def create(self, validated_data):
+        return None
+
+    def udpate(self, instance, validated_data):
+        return None
+
+
+class UserModel(NullMixin, serializers.ModelSerializer):
     class Meta:
-        model = models.User
+        model = auth_models.User
         fields = (
             'id', 'password', 'last_login', 'is_superuser', 'username',
             'first_name', 'last_name', 'email', 'is_staff', 'is_active',
@@ -24,14 +32,8 @@ class UserModel(serializers.ModelSerializer):
             },
         }
 
-    def create(self, validated_data):
-        return None
 
-    def udpate(self, instance, validated_data):
-        return None
-
-
-class User(serializers.Serializer):
+class User(NullMixin, serializers.Serializer):
     id = serializers.IntegerField(
         label='ID', read_only=True)
     password = serializers.CharField(
@@ -67,8 +69,22 @@ class User(serializers.Serializer):
     date_joined = serializers.DateTimeField(
         required=False)
 
-    def create(self, validated_data):
-        return None
 
-    def udpate(self, instance, validated_data):
-        return None
+class ModelCharField000001(NullMixin, serializers.ModelSerializer):
+    class Meta:
+        model = models.ModelCharField000001
+
+
+class ModelCharField000010(NullMixin, serializers.ModelSerializer):
+    class Meta:
+        model = models.ModelCharField000010
+
+
+class ModelCharField000100(NullMixin, serializers.ModelSerializer):
+    class Meta:
+        model = models.ModelCharField000100
+
+
+class ModelCharField001000(NullMixin, serializers.ModelSerializer):
+    class Meta:
+        model = models.ModelCharField001000

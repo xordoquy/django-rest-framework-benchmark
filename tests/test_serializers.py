@@ -4,25 +4,13 @@ from django.contrib.auth import models
 from drf_bench.core import serializers
 
 
-def run_serializer(data, many=True):
-    serializer = serializers.User(data, many=many)
+def run_serializer(Serializer, data, many=True):
+    serializer = Serializer(data, many=many)
     return serializer.data
 
 
-def run_deserializer(data, many=True):
-    serializer = serializers.User(data=data, many=many)
-    validity = serializer.is_valid()
-    print(serializer.errors)
-    return validity
-
-
-def run_model_serializer(data, many=True):
-    serializer = serializers.UserModel(data, many=many)
-    return serializer.data
-
-
-def run_model_deserializer(data, many=True):
-    serializer = serializers.UserModel(data=data, many=many)
+def run_deserializer(Serializer, data, many=True):
+    serializer = Serializer(data=data, many=many)
     validity = serializer.is_valid()
     print(serializer.errors)
     return validity
@@ -48,45 +36,48 @@ def generate_data(sample_size, base=False):
     return data
 
 
-def benchmark_serializer(benchmark, sample_size=1):
-    data = generate_data(sample_size)
-    result = benchmark(run_serializer, data)
-    assert result is not None
-
-
-def benchmark_model_serializer(benchmark, sample_size=1):
-    data = [models.User(**kwargs) for kwargs in generate_data(sample_size)]
-    result = benchmark(run_model_serializer, data)
-    assert result is not None
-
-
-def benchmark_deserializer(benchmark, sample_size=1):
-    data = generate_data(sample_size, base=True)
-    result = benchmark(run_deserializer, data)
-    assert result is True
-
-
-def benchmark_model_deserializer(benchmark, sample_size=1):
-    data = generate_data(sample_size, base=True)
-    result = benchmark(run_model_deserializer, data)
-    assert result is True
+def generate_sample_data(sample_size=1, field_qt=1, default_data='test'):
+    return [
+        dict((('field%06i' % j, default_data) for j in range(field_qt)))
+        for i in range(sample_size)
+    ]
 
 
 @pytest.mark.parametrize("sample_size", [1, 10, 100, 1000, 10000])
 def test_model_serializer(benchmark, sample_size):
-    benchmark_model_serializer(benchmark, sample_size=sample_size)
+    data = [models.User(**kwargs) for kwargs in generate_data(sample_size)]
+    result = benchmark(run_serializer, serializers.UserModel, data)
+    assert result is not None
 
 
 @pytest.mark.parametrize("sample_size", [1, 10, 100, 1000, 10000])
 def test_serializer(benchmark, sample_size):
-    benchmark_serializer(benchmark, sample_size=sample_size)
+    data = generate_data(sample_size)
+    result = benchmark(run_serializer, serializers.User, data)
+    assert result is not None
 
 
 @pytest.mark.parametrize("sample_size", [1, 10, 100, 1000, 10000])
 def test_model_deserializer(benchmark, sample_size):
-    benchmark_model_deserializer(benchmark, sample_size=sample_size)
+    data = generate_data(sample_size, base=True)
+    result = benchmark(run_deserializer, serializers.UserModel, data)
+    assert result is True
 
 
 @pytest.mark.parametrize("sample_size", [1, 10, 100, 1000, 10000])
 def test_deserializer(benchmark, sample_size):
-    benchmark_deserializer(benchmark, sample_size=sample_size)
+    data = generate_data(sample_size, base=True)
+    result = benchmark(run_deserializer, serializers.User, data)
+    assert result is True
+
+
+@pytest.mark.parametrize("field_qt", [1, 10, 100, 1000])
+def test_model_serializer_field_qt(benchmark, field_qt, sample_size=1):
+    data = generate_sample_data(
+        sample_size=sample_size,
+        field_qt=field_qt)
+    result = benchmark(
+        run_serializer,
+        getattr(serializers, 'ModelCharField%06i' % field_qt),
+        data)
+    assert result is not None
